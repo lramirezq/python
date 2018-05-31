@@ -16,6 +16,7 @@ server = ""
 token = ""
 encoded = ""
 epass = ""
+blackout_name = ""
 #Clase que representa una Applicacion
 class App(object):
     def __init__(self, id, name):
@@ -72,7 +73,7 @@ def add_blackouts(calendarId, inicio, fin):
     #headers = {"Content-Type": "application/json"}
     headers = {'Authorization': 'Basic '+ ':' + epass}
     data = {
-            "name": "Masivo desde Python ",
+            "name": blackout_name,
             "startDate": inicio,
             "startTime": "1970-01-01T12:00:00.000Z",
             "endDate": fin,
@@ -83,23 +84,35 @@ def add_blackouts(calendarId, inicio, fin):
     url = server + "/rest/deploy/schedule/blackout"
     #resp = requests.put(url, verify=False, auth=('admin', '3htp.com2017'))
     response = requests.put(url, data=json.dumps(data), headers=headers, verify=False, auth=('admin', '3htp.com2017'))
-    print(response.text)
+    
+    if response.status_code == 200:
+        print "Blackout Agregado Correctamente"
+    else:
+        print "ERROR al crear Blackout"
+        print response.status_code
+        print(response.text)
    
 def delete_blackouts(env_id):
     print "Quitar BlackOut"
     headers = {'Authorization': 'Basic '+ ':' + epass}
-    url = server + "/rest/deploy/schedule/calendar/environment/"+ env_id+"/1524970800000/1527998399999"    
+    #url = server + "/rest/deploy/schedule/calendar/environment/"+ env_id+"/1524970800000/1527998399999"    
+    url = server + "/rest/deploy/schedule/calendar/environment/"+ env_id+"/0000000000000/9999999999999"
     resp = requests.get(url, verify=False, headers=headers)
     data = resp.json()
     blackouts = data["blackouts"]
     for blackout in blackouts:
         print "blackout " + blackout["id"]
-        headers = {'content-type': 'application/json'}
+        #headers = {'content-type': 'application/json'}
+        headers = {'Authorization': 'Basic '+ ':' + epass}
         url_blackout = server + "/rest/deploy/schedule/blackout/"+blackout["id"]
         #resp = requests.delete(url_blackout, verify=False, auth=('admin', '3htp.com2017'))
         response = requests.delete(url_blackout,  headers=headers, verify=False)
-        print response
-
+        if response.status_code == 200:
+            print "Blackout Eliminado Correctamente"
+        else:
+            print "ERROR al Eliminar Blackout"
+            print response.status_code
+            print(response.text)
 
 def parse_fecha(fecha):
  
@@ -167,9 +180,9 @@ for app in apps:
     envs = get_environments(app.id)
     print "################. "+ app.name+". #####################" 
     for env in envs:
-        print "AMBIENTE: " + env.name
-        print "AMBIENTE: " + env.id
-        print "CALENDAR: " + env.calendarId
+        print "AMBIENTE   : " + env.name
+        print "AMBIENTE-ID: " + env.id
+        print "CALENDAR-ID: " + env.calendarId
         if habilitar == "true":
             add_blackouts(env.calendarId, inicio, fin)
         else:
